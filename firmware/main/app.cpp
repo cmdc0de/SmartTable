@@ -88,8 +88,7 @@ uint32_t MyApp::getBackBufferSize() {
 static libesp::RGB leds[10];
 static const size_t NumLEDs = sizeof(leds)/sizeof(leds[0]);
 static uint8_t ledBuffer[NumLEDs*3];
-APA104 LEDType;
-libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(LEDType, 255, 10);
+libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(APA104::get(), 255, 10);
 
 ErrorType MyApp::initFS() {
     esp_vfs_spiffs_conf_t conf = {
@@ -124,9 +123,33 @@ ErrorType MyApp::initFS() {
 libesp::ErrorType MyApp::onInit() {
 	ErrorType et;
   LedStrip.init(PIN_NUM_LEDS_MOSI, RMT_CHANNEL_0);
+  ESP_LOGI(LOGTAG, "set black");
+  {
+  libesp::RGB color(0,0,0);
+  LedStrip.fillColor(color);
+  LedStrip.send();
+  }
+  vTaskDelay(3000 / portTICK_RATE_MS);
+  ESP_LOGI(LOGTAG, "set red");
+  {
   libesp::RGB color(255,0,0);
   LedStrip.fillColor(color);
   LedStrip.send();
+  }
+  vTaskDelay(3000 / portTICK_RATE_MS);
+  ESP_LOGI(LOGTAG, "set green");
+  {
+  libesp::RGB color(0,255,0);
+  LedStrip.fillColor(color);
+  LedStrip.send();
+  }
+  vTaskDelay(3000 / portTICK_RATE_MS);
+  ESP_LOGI(LOGTAG, "set blue");
+  {
+  libesp::RGB color(0,0,255);
+  LedStrip.fillColor(color);
+  LedStrip.send();
+  }
 
 	//InternalQueueHandler = xQueueCreateStatic(QUEUE_SIZE,MSG_SIZE,&InternalQueueBuffer[0],&InternalQueue);
 /*
@@ -212,7 +235,7 @@ libesp::ErrorType MyApp::onInit() {
 ErrorType MyApp::onRun() {
    ErrorType et;
   // TouchTask.broadcast();
-	libesp::BaseMenu::ReturnStateContext rsc = getCurrentMenu()->run();
+	//libesp::BaseMenu::ReturnStateContext rsc = getCurrentMenu()->run();
    /*
 	Display.swap();
 
