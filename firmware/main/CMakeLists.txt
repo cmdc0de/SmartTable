@@ -3,9 +3,7 @@ set(srcs "./app.cpp"
 	"./smart_table.cpp"
   "./menus/menu_state.cpp"
   "./menus/appbase_menu.cpp"
-  "./menus/gui_list_processor.cpp"
   "./menus/wifi_menu.cpp"
-  "./menus/user_config_menu.cpp"
   "./menus/update_menu.cpp"
 )
 

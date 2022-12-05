@@ -1,7 +1,5 @@
 #include "wifi_menu.h"
 #include "../app.h"
-#include "calibration_menu.h"
-#include "gui_list_processor.h"
 #include <app/display_message_state.h>
 #include <esp_log.h>
 #include <esp_event.h>
@@ -443,7 +441,7 @@ esp_err_t WiFiMenu::handleCalibration(httpd_req_t *req) {
   esp_err_t et = ESP_OK;
   httpd_resp_set_type(req, "application/json");
   cJSON *root = cJSON_CreateObject();
-  MyApp::get().getCalibrationMenu()->calibrationData(root);
+  //MyApp::get().getCalibrationMenu()->calibrationData(root);
   const char *info = cJSON_Print(root);
   ESP_LOGI(LOGTAG, "%s", info);
   httpd_resp_sendstr(req, info);
@@ -454,7 +452,7 @@ esp_err_t WiFiMenu::handleCalibration(httpd_req_t *req) {
 
 esp_err_t WiFiMenu::handleResetCalibration(httpd_req_t *req) {
   esp_err_t et = ESP_OK;
-  MyApp::get().getCalibrationMenu()->eraseCalibration();
+  //MyApp::get().getCalibrationMenu()->eraseCalibration();
   httpd_resp_set_type(req, "text/html");
   const char *info = "<html><body><div><h2>ESP 32 is rebooting and will enter touch calibration mode</h2></div></body></html>";
   httpd_resp_sendstr(req, info);

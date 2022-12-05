@@ -3,8 +3,6 @@
 #include "device/touch/XPT2046.h"
 #include "math/point.h"
 #include "../app.h"
-#include "calibration_menu.h"
-#include "gui_list_processor.h"
 #include <esp_log.h>
 
 using libesp::TouchNotification;
@@ -25,6 +23,7 @@ char *AppBaseMenu::getRow(uint8_t row) {
 
 bool AppBaseMenu::processTouch(QueueHandle_t &queH, libesp::GUIListData &guiList, uint16_t itemCount, bool &penUp, bool &headerHit) {
 	TouchNotification *pe = nullptr;
+  /*
 	Point2Ds TouchPosInBuf;
 	headerHit = false;
 	if(xQueueReceive(queH, &pe, 0)) {
@@ -43,6 +42,7 @@ bool AppBaseMenu::processTouch(QueueHandle_t &queH, libesp::GUIListData &guiList
 		if(touchGUI==GUIListProcessor::GUI_HEADER_HIT) headerHit = true;
 		ESP_LOGI(LOGTAG,"pe: %d", int32_t(pe));
 	}
+  */
 	return pe!=nullptr;
 }
 

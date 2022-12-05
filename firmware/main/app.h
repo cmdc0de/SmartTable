@@ -10,8 +10,8 @@
 #include <app/app.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
-#include "dht22task.h"
-#include "mhz19btask.h"
+//#include "dht22task.h"
+//#include "mhz19btask.h"
 #include <nvs_memory.h>
 #include <adc.h>
 #include <freertos.h>
@@ -23,11 +23,8 @@ class DisplayMessageState;
 class OTA;
 };
 
-class CalibrationMenu;
 class MenuState;
 class WiFiMenu;
-class SettingMenu;
-class UserConfigMenu;
 
 enum ERRORS {
 	APP_OK = libesp::ErrorType::APP_OK
@@ -79,10 +76,7 @@ public:
 	uint16_t getLastCanvasWidthPixel();
 	uint16_t getLastCanvasHeightPixel();
    MenuState *getMenuState();
-   SettingMenu *getSettingMenu();
-	CalibrationMenu *getCalibrationMenu();
 	WiFiMenu *getWiFiMenu();
-   UserConfigMenu *getUserConfigMenu();
 	libesp::DisplayMessageState *getDisplayMessageState(libesp::BaseMenu *, const char *msg, uint32_t msDisplay);
 	uint8_t *getBackBuffer();
 	uint32_t getBackBufferSize();

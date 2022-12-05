@@ -11,18 +11,17 @@
 
 #include <driver/uart.h>
 #include <driver/gpio.h>
+#include <device/leds/noclockprgled.h>
 //#include <device/display/frame_buffer.h>
 //#include <device/display/display_device.h>
 //#include <device/display/fonts.h>
 //#include <device/display/gui.h>
 //#include <device/touch/XPT2046.h>
 #include "menus/menu_state.h"
-#include "menus/calibration_menu.h"
 //#include "menus/game_of_life.h"
 #include "menus/wifi_menu.h"
 #include "menus/setting_menu.h"
 //#include "menus/menu3d.h"
-#include "menus/user_config_menu.h"
 #include <app/display_message_state.h>
 #include "spibus.h"
 #include "freertos.h"
@@ -35,11 +34,12 @@
 using libesp::ErrorType;
 using libesp::System;
 using libesp::FreeRTOS;
-using libesp::RGBB;
-using libesp::RGBColor;
+//using libesp::RGBB;
+//using libesp::RGBColor;
 using libesp::SPIBus;
 using libesp::DisplayMessageState;
 using libesp::BaseMenu;
+using libesp::APA104;
 
 const char *MyApp::LOGTAG = "AppTask";
 const char *MyApp::sYES = "Yes";
@@ -48,9 +48,9 @@ const char *MyApp::sNO = "No";
 static uint16_t BkBuffer[MyApp::FRAME_BUFFER_WIDTH*MyApp::FRAME_BUFFER_HEIGHT];
 static uint16_t *BackBuffer = &BkBuffer[0];
 
-uint16_t ParallelLinesBuffer[MyApp::DISPLAY_WIDTH*PARALLEL_LINES] = {0};
+//uint16_t ParallelLinesBuffer[MyApp::DISPLAY_WIDTH*PARALLEL_LINES] = {0};
 
-static CalibrationMenu MyCalibrationMenu("nvs");
+//static CalibrationMenu MyCalibrationMenu("nvs");
 static WiFiMenu MyWiFiMenu;
 libesp::OTA CCOTA;
 
@@ -60,7 +60,7 @@ const char *MyErrorMap::toString(int32_t err) {
 
 MyApp MyApp::mSelf;
 static StaticQueue_t InternalQueue;
-static uint8_t InternalQueueBuffer[MyApp::QUEUE_SIZE*MyApp::MSG_SIZE] = {0};
+//static uint8_t InternalQueueBuffer[MyApp::QUEUE_SIZE*MyApp::MSG_SIZE] = {0};
 
 MyApp &MyApp::get() {
 	return mSelf;
@@ -84,9 +84,12 @@ uint8_t *MyApp::getBackBuffer() {
 uint32_t MyApp::getBackBufferSize() {
 	return MyApp::FRAME_BUFFER_WIDTH*MyApp::FRAME_BUFFER_HEIGHT*2;
 }
-  
-static RGBB leds[128];
-static size_t NumLEDs = sizeof(leds)/sizeof(leds[0]);
+ 
+static libesp::RGB leds[10];
+static const size_t NumLEDs = sizeof(leds)/sizeof(leds[0]);
+static uint8_t ledBuffer[NumLEDs*3];
+APA104 LEDType;
+libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(LEDType, 255, 10);
 
 ErrorType MyApp::initFS() {
     esp_vfs_spiffs_conf_t conf = {
@@ -118,18 +121,15 @@ ErrorType MyApp::initFS() {
     return ESP_OK;
 }
 
-uint32_t LastMotionDetect = 0;
-
-static void gpio_isr_handler(void* arg) {
-  LastMotionDetect = FreeRTOS::getTimeSinceStart();
-  printf("motion");
-}
-
 libesp::ErrorType MyApp::onInit() {
 	ErrorType et;
+  LedStrip.init(PIN_NUM_LEDS_MOSI, RMT_CHANNEL_0);
+  libesp::RGB color(255,0,0);
+  LedStrip.fillColor(color);
+  LedStrip.send();
 
-	InternalQueueHandler = xQueueCreateStatic(QUEUE_SIZE,MSG_SIZE,&InternalQueueBuffer[0],&InternalQueue);
-
+	//InternalQueueHandler = xQueueCreateStatic(QUEUE_SIZE,MSG_SIZE,&InternalQueueBuffer[0],&InternalQueue);
+/*
 	ESP_LOGI(LOGTAG,"OnInit: Free: %u, Min %u", System::get().getFreeHeapSize(),System::get().getMinimumFreeHeapSize());
    et = getConfig().init();
    if(!et.ok()) {
@@ -171,7 +171,7 @@ libesp::ErrorType MyApp::onInit() {
 	}
 	ESP_LOGI(LOGTAG,"OnInit: Free: %u, Min %u", System::get().getFreeHeapSize(),System::get().getMinimumFreeHeapSize());
 
-   /* init LEDS
+   init LEDS
   et = APA102c::initAPA102c(PIN_NUM_LEDS_MOSI, PIN_NUM_LEDS_CLK, SPI2_HOST, SPI_DMA_CH1);
   if(!et.ok()) {
     return et;
@@ -189,7 +189,7 @@ libesp::ErrorType MyApp::onInit() {
    if(isConfigMode()) {
       //et = MyWiFiMenu.initWiFiForAP();
       MyApp::get().getWiFiMenu()->startAP();
-      setCurrentMenu(getUserConfigMenu());
+      //setCurrentMenu(getUserConfigMenu());
    } else {
       et = MyWiFiMenu.initWiFiForSTA();
       if(et.ok()) {
@@ -203,7 +203,7 @@ libesp::ErrorType MyApp::onInit() {
          et = MyWiFiMenu.connect();
          setCurrentMenu(getMenuState());
       } else {
-         setCurrentMenu(getSettingMenu());
+         //setCurrentMenu(getSettingMenu());
       }
    }
 	return et;
@@ -211,7 +211,7 @@ libesp::ErrorType MyApp::onInit() {
 
 ErrorType MyApp::onRun() {
    ErrorType et;
-   TouchTask.broadcast();
+  // TouchTask.broadcast();
 	libesp::BaseMenu::ReturnStateContext rsc = getCurrentMenu()->run();
    /*
 	Display.swap();
@@ -260,16 +260,15 @@ ErrorType MyApp::onRun() {
       }
       break;
     }
-  }
 	return et;
 }
 
 uint16_t MyApp::getCanvasWidth() {
-	return FrameBuf.getBufferWidth(); 
+	return 0;//FrameBuf.getBufferWidth(); 
 }
 
 uint16_t MyApp::getCanvasHeight() {
-	return FrameBuf.getBufferHeight();
+	return 0;//FrameBuf.getBufferHeight();
 }
 
 uint16_t MyApp::getLastCanvasWidthPixel() {
@@ -282,24 +281,13 @@ uint16_t MyApp::getLastCanvasHeightPixel() {
 
 MenuState MyMenuState;
 libesp::DisplayMessageState DMS;
-SettingMenu MySettingMenu;
-UserConfigMenu UCM;
 
 
 MenuState *MyApp::getMenuState() {
 	return &MyMenuState;
 }
-
-SettingMenu *MyApp::getSettingMenu() {
-	return &MySettingMenu;
-}
-
 WiFiMenu *MyApp::getWiFiMenu() {
   return &MyWiFiMenu;
-}
-
-UserConfigMenu *MyApp::getUserConfigMenu() {
-   return &UCM;
 }
 
 libesp::OTA &MyApp::getOTA() {
@@ -307,10 +295,10 @@ libesp::OTA &MyApp::getOTA() {
 }
 
 DisplayMessageState *MyApp::getDisplayMessageState(BaseMenu *bm, const char *msg, uint32_t msDisplay) {
-	DMS.setMessage(msg);
-	DMS.setNextState(bm);
-	DMS.setTimeInState(msDisplay);
-	DMS.setDisplay(&Display);
+	//DMS.setMessage(msg);
+	//DMS.setNextState(bm);
+	//DMS.setTimeInState(msDisplay);
+	//DMS.setDisplay(&Display);
 	return &DMS;
 }
 

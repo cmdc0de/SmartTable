@@ -1,7 +1,5 @@
 #include "menu_state.h"
 #include "../app.h"
-#include "gui_list_processor.h"
-#include "calibration_menu.h"
 #include <app/display_message_state.h>
 #include <esp_log.h>
 #include <math/rectbbox.h>
@@ -50,75 +48,16 @@ MenuState::~MenuState() {
 }
 
 ErrorType MenuState::onInit() {
-	MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
-	TouchNotification *pe = nullptr;
-	for(int i=0;i<2;i++) {
-		if(xQueueReceive(InternalQueueHandler, &pe, 0)) {
-			delete pe;
-		}
-	}
-	MyApp::get().getTouch().addObserver(InternalQueueHandler);
 	return ErrorType();
 }
 
 libesp::BaseMenu::ReturnStateContext MenuState::onRun() {
 	BaseMenu *nextState = this;
 
-	TouchNotification *pe = nullptr;
-	Point2Ds TouchPosInBuf;
-	libesp::Widget *widgetHit = nullptr;
-	bool penUp = false;
-	if(xQueueReceive(InternalQueueHandler, &pe, 0)) {
-		ESP_LOGI(LOGTAG,"que");
-		Point2Ds screenPoint(pe->getX(),pe->getY());
-		TouchPosInBuf = MyApp::get().getCalibrationMenu()->getPickPoint(screenPoint);
-		ESP_LOGI(LOGTAG,"TouchPoint: X:%d Y:%d PD:%d", int32_t(TouchPosInBuf.getX()),
-								 int32_t(TouchPosInBuf.getY()), pe->isPenDown()?1:0);
-		penUp = !pe->isPenDown();
-		delete pe;
-		widgetHit = MyLayout.pick(TouchPosInBuf);
-	}
-
-  char buf[32];
-  float f = MyApp::get().getTemp();
-  if(!MyApp::get().getConfig().wantC()) {
-    f = ((f*9.0f)/5.0f) + 32;
-  }
-  sprintf(&buf[0],"%2.1f",f);
-  TempLabel.setDisplayText(&buf[0]);
-  sprintf(&buf[0],"%2.1f",MyApp::get().getHumidity());
-  HumLabel.setDisplayText(&buf[0]);
-  sprintf(&buf[0],"%d", MyApp::get().getCO2());
-  CO2Label.setDisplayText(&buf[0]);
-  sprintf(&buf[0],"%u", MyApp::get().getLightCalcVoltage());
-  LSLabel.setDisplayText(&buf[0]);
-
-  OzoneLabel.setDisplayText("TODO");
-
-	MyLayout.draw(&MyApp::get().getDisplay());
-    
-  time_t now = 0;
-  time(&now);
-  struct tm timeinfo;
-  memset(&timeinfo,0,sizeof(timeinfo));
-  localtime_r(&now, &timeinfo);
-  strftime(buf, sizeof(buf), "%c", &timeinfo);
-  MyApp::get().getDisplay().drawString(3,70,&buf[0],(MyApp::get().wasMotion()?libesp::RGBColor::BLUE:libesp::RGBColor::WHITE));
-
-	if(widgetHit) {
-		ESP_LOGI(LOGTAG, "Widget %s hit\n", widgetHit->getName());
-		switch(widgetHit->getWidgetID()) {
-		case 2:
-			nextState = MyApp::get().getSettingMenu();
-			break;
-		}
-	}
-
 	return BaseMenu::ReturnStateContext(nextState);
 }
 
 ErrorType MenuState::onShutdown() {
-	MyApp::get().getTouch().removeObserver(InternalQueueHandler);
 	return ErrorType();
 }
 

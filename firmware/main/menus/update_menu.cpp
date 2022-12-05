@@ -33,7 +33,7 @@ protected:
       char buffer[64] = {'\0'};
       char buffer1[64] = {'\0'};
       char buffer2[64] = {'\0'};
-	   MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
+	   //MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
       uint32_t delayTime = 1000;
       switch(p) {
          case INIT:
@@ -89,10 +89,10 @@ protected:
             sprintf(&buffer2[0], "Downloaded: %s", this->getDownloadVersion());
             break;
       }
-      MyApp::get().getDisplay().drawString(2,20,&buffer[0]);
-      MyApp::get().getDisplay().drawString(2,40,&buffer1[0]);
-      MyApp::get().getDisplay().drawString(2,60,&buffer2[0]);
-      MyApp::get().getDisplay().swap();
+      //MyApp::get().getDisplay().drawString(2,20,&buffer[0]);
+      //MyApp::get().getDisplay().drawString(2,40,&buffer1[0]);
+      //MyApp::get().getDisplay().drawString(2,60,&buffer2[0]);
+      //MyApp::get().getDisplay().swap();
 	   vTaskDelay(delayTime / portTICK_RATE_MS);
    }
 };
@@ -110,35 +110,28 @@ UpdateMenu::~UpdateMenu() {
 
 
 ErrorType UpdateMenu::onInit() {
-	TouchNotification *pe = nullptr;
-	for(int i=0;i<2;i++) {
-		if(xQueueReceive(TouchQueueHandle, &pe, 0)) {
-			delete pe;
-		}
-	}
-	MyApp::get().getTouch().addObserver(TouchQueueHandle);
-	MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
 	return ErrorType();
 }
 
 
 BaseMenu::ReturnStateContext UpdateMenu::onRun() {
 	BaseMenu *nextState = MyApp::get().getMenuState();
-	TouchNotification *pe = nullptr;
+	/*TouchNotification *pe = nullptr;
 	for(int i=0;i<2;i++) {
 		if(xQueueReceive(TouchQueueHandle, &pe, 0)) {
 			delete pe;
 		}
 	}
+  */
 
    UpdateProgress UP;
    ErrorType et = MyApp::get().getOTA().run(&UP);
    if(!et.ok()) {
       char buf[64];
       sprintf(&buf[0],"Error: %s", et.toString());
-	   MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
-      MyApp::get().getDisplay().drawString(2,90,&buf[0]);
-      MyApp::get().getDisplay().swap();
+	  // MyApp::get().getDisplay().fillScreen(RGBColor::BLACK);
+    //  MyApp::get().getDisplay().drawString(2,90,&buf[0]);
+    //  MyApp::get().getDisplay().swap();
 	   vTaskDelay(3000 / portTICK_RATE_MS);
    }
 
@@ -146,7 +139,7 @@ BaseMenu::ReturnStateContext UpdateMenu::onRun() {
 }
 
 ErrorType UpdateMenu::onShutdown() {
-	MyApp::get().getTouch().removeObserver(TouchQueueHandle);
+	//MyApp::get().getTouch().removeObserver(TouchQueueHandle);
 	return ErrorType();
 }
 
