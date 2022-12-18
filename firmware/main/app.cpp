@@ -85,10 +85,10 @@ uint32_t MyApp::getBackBufferSize() {
 	return MyApp::FRAME_BUFFER_WIDTH*MyApp::FRAME_BUFFER_HEIGHT*2;
 }
  
-static libesp::RGB leds[10];
+static libesp::RGB leds[255];
 static const size_t NumLEDs = sizeof(leds)/sizeof(leds[0]);
 static uint8_t ledBuffer[NumLEDs*3];
-libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(APA104::get(), 255, 10);
+libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(APA104::get(), 255, NumLEDs);
 
 ErrorType MyApp::initFS() {
     esp_vfs_spiffs_conf_t conf = {
