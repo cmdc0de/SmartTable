@@ -14,7 +14,7 @@ using libesp::TouchNotification;
 
 static StaticQueue_t InternalQueue;
 static uint8_t InternalQueueBuffer[MenuState::QUEUE_SIZE*MenuState::MSG_SIZE] = {0};
-static const char *LOGTAG = "MenuState";
+//static const char *LOGTAG = "MenuState";
 
 static libesp::RectBBox2D TempBV(Point2Ds(30,37), 20, 15);
 static libesp::Label TempLabel(uint16_t(0), (const char *)"Temp", &TempBV,RGBColor::BLUE, RGBColor::WHITE, RGBColor::BLACK, false);
@@ -48,6 +48,7 @@ MenuState::~MenuState() {
 }
 
 ErrorType MenuState::onInit() {
+//   ESP_LOGI(LOGTAG,"init");
 	return ErrorType();
 }
 

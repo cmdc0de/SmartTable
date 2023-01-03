@@ -10,13 +10,11 @@
 #include <app/app.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
-//#include "dht22task.h"
-//#include "mhz19btask.h"
 #include <nvs_memory.h>
-#include <adc.h>
 #include <freertos.h>
 #include <device/display/layout.h>
 #include "config.h"
+#include "device/display/ep_display_device.h"
 
 namespace libesp {
 class DisplayMessageState;
@@ -60,12 +58,9 @@ public:
 	static const char *sNO;
    static const uint32_t TIME_BETWEEN_PULSES = 200;
    static const uint32_t TIME_BETWEEN_WIFI_CONNECTS = 60000;
-   static const uint16_t DISPLAY_HEIGHT		= 240;
-	static const uint16_t DISPLAY_WIDTH			= 320;
+   static const uint16_t DISPLAY_HEIGHT		= libesp::EPDisplay::EP29_HEIGHT;
+	static const uint16_t DISPLAY_WIDTH			= libesp::EPDisplay::EP29_WIDTH;
 	//reminder ESP32 has 160KiB static and DRAM So a 1:1 buffer doesn't fit.
-	static const uint16_t FRAME_BUFFER_HEIGHT	= 144;
-	static const uint16_t FRAME_BUFFER_WIDTH	= 192;
-   static const uint32_t TIME_MOTION_DETECT  = 3000;
    static const uint32_t ESP_INTR_FLAG_DEFAULT= 0;
 
 	static MyApp &get();
@@ -97,7 +92,6 @@ private:
    uint32_t LastTime;
 	QueueHandle_t InternalQueueHandler;
    libesp::NVS NVSStorage;
-   libesp::ADC::Result LSensorResult;
    Config ConfigStore;
    uint32_t LastConnectCheck;
    int8_t IsConfigMode;

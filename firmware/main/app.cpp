@@ -12,16 +12,11 @@
 #include <driver/uart.h>
 #include <driver/gpio.h>
 #include <device/leds/noclockprgled.h>
-//#include <device/display/frame_buffer.h>
-//#include <device/display/display_device.h>
-//#include <device/display/fonts.h>
-//#include <device/display/gui.h>
-//#include <device/touch/XPT2046.h>
+#include "device/display/display_device.h"
+#include "hal/spi_types.h"
 #include "menus/menu_state.h"
-//#include "menus/game_of_life.h"
 #include "menus/wifi_menu.h"
 #include "menus/setting_menu.h"
-//#include "menus/menu3d.h"
 #include <app/display_message_state.h>
 #include "spibus.h"
 #include "freertos.h"
@@ -30,23 +25,24 @@
 #include <esp_spiffs.h>
 #include <time.h>
 #include <net/ota.h>
+#include <device/display/ep_display_device.h>
 
 using libesp::ErrorType;
 using libesp::System;
 using libesp::FreeRTOS;
-//using libesp::RGBB;
-//using libesp::RGBColor;
 using libesp::SPIBus;
+using libesp::SPIDevice;
 using libesp::DisplayMessageState;
 using libesp::BaseMenu;
 using libesp::APA104;
+using libesp::EPDisplay;
 
 const char *MyApp::LOGTAG = "AppTask";
 const char *MyApp::sYES = "Yes";
 const char *MyApp::sNO = "No";
 
-static uint16_t BkBuffer[MyApp::FRAME_BUFFER_WIDTH*MyApp::FRAME_BUFFER_HEIGHT];
-static uint16_t *BackBuffer = &BkBuffer[0];
+static uint8_t BkBuffer[EPDisplay::EP29_BK_BUFFER_SIZE];
+static uint8_t *BackBuffer = &BkBuffer[0];
 
 //uint16_t ParallelLinesBuffer[MyApp::DISPLAY_WIDTH*PARALLEL_LINES] = {0};
 
@@ -82,12 +78,11 @@ uint8_t *MyApp::getBackBuffer() {
 }
 
 uint32_t MyApp::getBackBufferSize() {
-	return MyApp::FRAME_BUFFER_WIDTH*MyApp::FRAME_BUFFER_HEIGHT*2;
+	return EPDisplay::EP29_BK_BUFFER_SIZE;
 }
  
 static libesp::RGB leds[255];
 static const size_t NumLEDs = sizeof(leds)/sizeof(leds[0]);
-static uint8_t ledBuffer[NumLEDs*3];
 libesp::NoClkLedStrip LedStrip = libesp::NoClkLedStrip::create(APA104::get(), 255, NumLEDs);
 
 ErrorType MyApp::initFS() {
@@ -122,6 +117,8 @@ ErrorType MyApp::initFS() {
 
 libesp::ErrorType MyApp::onInit() {
 	ErrorType et;
+
+#if 0
   LedStrip.init(PIN_NUM_LEDS_MOSI, RMT_CHANNEL_0);
   ESP_LOGI(LOGTAG, "set black");
   {
@@ -150,6 +147,7 @@ libesp::ErrorType MyApp::onInit() {
   LedStrip.fillColor(color);
   LedStrip.send();
   }
+#endif
 
 	//InternalQueueHandler = xQueueCreateStatic(QUEUE_SIZE,MSG_SIZE,&InternalQueueBuffer[0],&InternalQueue);
 /*
@@ -204,8 +202,27 @@ libesp::ErrorType MyApp::onInit() {
 
   */
 	ESP_LOGI(LOGTAG,"OnInit: Free: %u, Min %u", System::get().getFreeHeapSize(),System::get().getMinimumFreeHeapSize());
-	SPIBus *vbus = SPIBus::get(SPI2_HOST);
-  //et = LedControl.initDevice(vbus);
+   //SPIBus *vbus = SPIBus::get(SPI2_HOST);
+   SPIDevice *epdDevice = 0;
+   et = EPDisplay::initBusAndDisplayDevice(NOPIN, PIN_NUM_DISPLAY_MOSI, PIN_NUM_DISPLAY_SCK, PIN_NUM_DISPLAY_CS,
+      PIN_NUM_DISPLAY_RESET, PIN_NUM_DISPLAY_BUSY, SPI2_HOST, epdDevice);
+   
+   if(!et.ok()) {
+      ESP_LOGE(LOGTAG,"initBus and Device epd - Error Num :%d Msg: %s", et.getErrT(), et.toString());
+   }
+
+	ESP_LOGI(LOGTAG,"OnInit: Free: %u, Min %u", System::get().getFreeHeapSize(),System::get().getMinimumFreeHeapSize());
+   EPDisplay EPD(libesp::DisplayDevice::LANDSCAPE_TOP_LEFT, PIN_NUM_DISPLAY_BACKLIGHT, PIN_NUM_DISPLAY_RESET,
+      PIN_NUM_DISPLAY_BUSY, EPDisplay::DISPLAY_TYPE::EP2_9);
+
+	ESP_LOGI(LOGTAG,"OnInit: Free: %u, Min %u", System::get().getFreeHeapSize(),System::get().getMinimumFreeHeapSize());
+
+   et = EPD.init(epdDevice, PIN_NUM_DISPLAY_DATA_CMD, &Font_6x10, BackBuffer);
+
+   if(!et.ok()) {
+      ESP_LOGE(LOGTAG,"EPD init failed - Error Num :%d Msg: %s", et.getErrT(), et.toString());
+   }
+
 
   et = getNVS().getValue(MyApp::CONFIG_MODE,IsConfigMode);
   ESP_LOGI(LOGTAG, "value of config mode is: %d", int32_t(IsConfigMode));
